@@ -2,31 +2,25 @@
 header('Content-Type: application/json');
 
 // Connect to database
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "tasks";
+$dbconn = pg_connect("host=localhost dbname=mydatabase user=myuser password=mypassword");
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
+if (!$dbconn) {
+  echo json_encode(array('error' => 'Failed to connect to database'));
+  exit;
 }
 
 // Fetch tasks from database
-$sql = "SELECT * FROM tasks";
-$result = $conn->query($sql);
+$result = pg_query($dbconn, "SELECT * FROM tasks");
 
 $tasks = array();
-if ($result->num_rows > 0) {
-  while($row = $result->fetch_assoc()) {
-    $tasks[] = array(
-      'id' => $row['id'],
-      'text' => $row['text']
-    );
-  }
+while ($row = pg_fetch_assoc($result)) {
+  $tasks[] = array(
+    'id' => $row['id'],
+    'text' => $row['text']
+  );
 }
 
-$conn->close();
+pg_close($dbconn);
 
 echo json_encode($tasks);
 ?>

@@ -1,28 +1,27 @@
 <?php
-if (isset($_GET['id'])) {
-  $id = $_GET['id'];
+// Read task id from query parameters
+$id = $_GET['id'];
 
+if (!empty($id)) {
   // Connect to database
-  $servername = "localhost";
-  $username = "root";
-  $password = "";
-  $dbname = "tasks";
+  $dbconn = pg_connect("host=localhost dbname=mydatabase user=myuser password=mypassword");
 
-  $conn = new mysqli($servername, $username, $password, $dbname);
-  if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+  if (!$dbconn) {
+    echo json_encode(array('error' => 'Failed to connect to database'));
+    exit;
   }
 
   // Delete task from database
-  $sql = "DELETE FROM tasks WHERE id='$id'";
-  if ($conn->query($sql) === TRUE) {
-    echo json_encode(array('message' => 'Task deleted successfully'));
+  $result = pg_query_params($dbconn, "DELETE FROM tasks WHERE id=$1", array($id));
+
+  if (!$result) {
+    echo json_encode(array('error' => 'Failed to delete task'));
   } else {
-    echo json_encode(array('error' => 'Error: ' . $sql . '<br>' . $conn->error));
+    echo json_encode(array('message' => 'Task deleted successfully'));
   }
 
-  $conn->close();
+  pg_close($dbconn);
 } else {
-  echo json_encode(array('error' => 'ID is required'));
+  echo json_encode(array('error' => 'Task id is required'));
 }
 ?>
